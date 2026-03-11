@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>项目管理系统</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="layout">
+      <aside class="sidebar">
+        <h1>PM Suite</h1>
+        <nav>
+          <a class="active" href="#">仪表盘</a>
+          <a href="#">项目</a>
+          <a href="#">任务</a>
+          <a href="#">团队</a>
+          <a href="#">报表</a>
+        </nav>
+      </aside>
+
+      <main class="main-content">
+        <header class="topbar">
+          <div>
+            <h2>项目管理系统</h2>
+            <p>欢迎回来，今天有 12 项任务等待处理。</p>
+          </div>
+          <button id="newTaskBtn">+ 新建任务</button>
+        </header>
+
+        <section class="stats-grid">
+          <article class="card"><h3>进行中项目</h3><p id="activeProjects">6</p></article>
+          <article class="card"><h3>待办任务</h3><p id="todoCount">12</p></article>
+          <article class="card"><h3>逾期任务</h3><p id="overdueCount">3</p></article>
+          <article class="card"><h3>本周完成率</h3><p>78%</p></article>
+        </section>
+
+        <section class="board-section">
+          <div class="section-header">
+            <h3>任务看板</h3>
+            <select id="statusFilter">
+              <option value="all">全部状态</option>
+              <option value="todo">待处理</option>
+              <option value="progress">进行中</option>
+              <option value="done">已完成</option>
+            </select>
+          </div>
+          <div id="taskList" class="task-list"></div>
+        </section>
+      </main>
+    </div>
+
+    <template id="taskTemplate">
+      <article class="task-item">
+        <div>
+          <h4 class="task-title"></h4>
+          <p class="task-meta"></p>
+        </div>
+        <span class="task-status"></span>
+      </article>
+    </template>
+
+    <script src="script.js"></script>
+  </body>
+</html>
