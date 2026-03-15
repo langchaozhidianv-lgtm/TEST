@@ -1,0 +1,107 @@
+
+> project-management-mvp@0.1.0 dev
+> next dev -H 0.0.0.0 -p 3000
+
+  ▲ Next.js 14.2.3
+  - Local:        http://localhost:3000
+  - Network:      http://0.0.0.0:3000
+  - Experiments (use with caution):
+    · typedRoutes
+
+ ✓ Starting...
+ ✓ Ready in 1438ms
+ ○ Compiling / ...
+ ✓ Compiled / in 3.1s (497 modules)
+ GET / 307 in 3330ms
+ ○ Compiling /projects ...
+ ✓ Compiled /projects in 2.6s (493 modules)
+ GET /projects 200 in 2773ms
+ ○ Compiling /projects/[projectId] ...
+ ✓ Compiled /projects/[projectId] in 535ms (504 modules)
+ GET / 307 in 146ms
+ GET /projects 200 in 89ms
+ ✓ Compiled in 193ms (264 modules)
+ ✓ Compiled in 131ms (264 modules)
+ ✓ Compiled in 191ms (266 modules)
+ ✓ Compiled in 458ms (504 modules)
+ ✓ Compiled in 355ms (518 modules)
+ GET /projects/project_1 200 in 153ms
+ ○ Compiling /_not-found ...
+ ✓ Compiled /_not-found in 822ms (507 modules)
+ GET /_next/static/css/app/layout.css?v=1773554230608 404 in 1089ms
+ GET /_next/static/chunks/app-pages-internals.js 404 in 634ms
+ GET /_next/static/chunks/webpack.js?v=1773554230608 404 in 1097ms
+ GET /_next/static/chunks/main-app.js?v=1773554230608 404 in 989ms
+ GET /_next/static/chunks/app/projects/page.js 404 in 631ms
+ ⨯ Error: Cannot find module './948.js'
+Require stack:
+- C:\Users\LC\Documents\New project\.next\server\webpack-runtime.js
+- C:\Users\LC\Documents\New project\.next\server\app\_not-found\page.js
+- C:\Users\LC\Documents\New project\node_modules\next\dist\server\require.js
+- C:\Users\LC\Documents\New project\node_modules\next\dist\server\load-components.js
+- C:\Users\LC\Documents\New project\node_modules\next\dist\build\utils.js
+- C:\Users\LC\Documents\New project\node_modules\next\dist\server\dev\hot-middleware.js
+- C:\Users\LC\Documents\New project\node_modules\next\dist\server\dev\hot-reloader-webpack.js
+- C:\Users\LC\Documents\New project\node_modules\next\dist\server\lib\router-utils\setup-dev-bundler.js
+- C:\Users\LC\Documents\New project\node_modules\next\dist\server\lib\router-server.js
+- C:\Users\LC\Documents\New project\node_modules\next\dist\server\lib\start-server.js
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1456:15)
+    at C:\Users\LC\Documents\New project\node_modules\next\dist\server\require-hook.js:55:36
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1066:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1071:22)
+    at Module._load (node:internal/modules/cjs/loader:1242:25)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:255:19)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1556:12)
+    at mod.require (C:\Users\LC\Documents\New project\node_modules\next\dist\server\require-hook.js:65:28)
+    at require (node:internal/modules/helpers:152:16)
+    at __webpack_require__.f.require (C:\Users\LC\Documents\New project\.next\server\webpack-runtime.js:198:28)
+    at C:\Users\LC\Documents\New project\.next\server\webpack-runtime.js:111:40
+    at Array.reduce (<anonymous>)
+    at __webpack_require__.e (C:\Users\LC\Documents\New project\.next\server\webpack-runtime.js:110:67)
+    at Array.map (<anonymous>)
+    at __webpack_require__.X (C:\Users\LC\Documents\New project\.next\server\webpack-runtime.js:162:22)
+    at C:\Users\LC\Documents\New project\.next\server\app\projects\page.js:1:4824
+    at Object.<anonymous> (C:\Users\LC\Documents\New project\.next\server\app\projects\page.js:1:4873)
+    at Module._compile (node:internal/modules/cjs/loader:1812:14)
+    at Object..js (node:internal/modules/cjs/loader:1943:10)
+    at Module.load (node:internal/modules/cjs/loader:1533:32)
+    at Module._load (node:internal/modules/cjs/loader:1335:12)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:255:19)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1556:12)
+    at mod.require (C:\Users\LC\Documents\New project\node_modules\next\dist\server\require-hook.js:65:28)
+    at require (node:internal/modules/helpers:152:16)
+    at requirePage (C:\Users\LC\Documents\New project\node_modules\next\dist\server\require.js:109:84)
+    at C:\Users\LC\Documents\New project\node_modules\next\dist\server\load-components.js:98:84
+    at async loadComponentsImpl (C:\Users\LC\Documents\New project\node_modules\next\dist\server\load-components.js:98:26)
+    at async DevServer.findPageComponentsImpl (C:\Users\LC\Documents\New project\node_modules\next\dist\server\next-server.js:710:36)
+    at async DevServer.findPageComponents (C:\Users\LC\Documents\New project\node_modules\next\dist\server\dev\next-dev-server.js:577:20)
+    at async DevServer.renderPageComponent (C:\Users\LC\Documents\New project\node_modules\next\dist\server\base-server.js:1910:24)
+    at async DevServer.renderToResponseImpl (C:\Users\LC\Documents\New project\node_modules\next\dist\server\base-server.js:1962:32)
+    at async DevServer.pipeImpl (C:\Users\LC\Documents\New project\node_modules\next\dist\server\base-server.js:920:25)
+    at async NextNodeServer.handleCatchallRenderRequest (C:\Users\LC\Documents\New project\node_modules\next\dist\server\next-server.js:272:17)
+    at async DevServer.handleRequestImpl (C:\Users\LC\Documents\New project\node_modules\next\dist\server\base-server.js:816:17)
+    at async C:\Users\LC\Documents\New project\node_modules\next\dist\server\dev\next-dev-server.js:339:20
+    at async Span.traceAsyncFn (C:\Users\LC\Documents\New project\node_modules\next\dist\trace\trace.js:154:20)
+    at async DevServer.handleRequest (C:\Users\LC\Documents\New project\node_modules\next\dist\server\dev\next-dev-server.js:336:24)
+    at async invokeRender (C:\Users\LC\Documents\New project\node_modules\next\dist\server\lib\router-server.js:174:21)
+    at async handleRequest (C:\Users\LC\Documents\New project\node_modules\next\dist\server\lib\router-server.js:353:24)
+    at async requestHandlerImpl (C:\Users\LC\Documents\New project\node_modules\next\dist\server\lib\router-server.js:377:13)
+    at async Server.requestListener (C:\Users\LC\Documents\New project\node_modules\next\dist\server\lib\start-server.js:141:13) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    'C:\\Users\\LC\\Documents\\New project\\.next\\server\\webpack-runtime.js',
+    'C:\\Users\\LC\\Documents\\New project\\.next\\server\\app\\_not-found\\page.js',
+    'C:\\Users\\LC\\Documents\\New project\\node_modules\\next\\dist\\server\\require.js',
+    'C:\\Users\\LC\\Documents\\New project\\node_modules\\next\\dist\\server\\load-components.js',
+    'C:\\Users\\LC\\Documents\\New project\\node_modules\\next\\dist\\build\\utils.js',
+    'C:\\Users\\LC\\Documents\\New project\\node_modules\\next\\dist\\server\\dev\\hot-middleware.js',
+    'C:\\Users\\LC\\Documents\\New project\\node_modules\\next\\dist\\server\\dev\\hot-reloader-webpack.js',
+    'C:\\Users\\LC\\Documents\\New project\\node_modules\\next\\dist\\server\\lib\\router-utils\\setup-dev-bundler.js',
+    'C:\\Users\\LC\\Documents\\New project\\node_modules\\next\\dist\\server\\lib\\router-server.js',
+    'C:\\Users\\LC\\Documents\\New project\\node_modules\\next\\dist\\server\\lib\\start-server.js'
+  ],
+  page: '/projects'
+}
+ ○ Compiling /_error ...
+ ✓ Compiled /_error in 2.1s (731 modules)
+ GET /projects 500 in 2566ms
