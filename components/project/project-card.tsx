@@ -1,5 +1,8 @@
+"use client";
+
 import Link from "next/link";
 
+import { useLanguage } from "@/components/language-provider";
 import { formatDate } from "@/lib/format";
 import { getProjectStats, getUser } from "@/lib/mock-data";
 import type { Project } from "@/lib/types";
@@ -9,6 +12,7 @@ interface ProjectCardProps {
 }
 
 export function ProjectCard({ project }: ProjectCardProps) {
+  const { locale } = useLanguage();
   const owner = getUser(project.ownerId);
   const stats = getProjectStats(project.id);
 
@@ -16,20 +20,20 @@ export function ProjectCard({ project }: ProjectCardProps) {
     <Link className="project-card" href={`/projects/${project.id}`}>
       <div className="card-topline">
         <span className={`status-badge status-${project.status.toLowerCase()}`}>{project.status}</span>
-        <span className="muted">{owner?.name ?? "未分配负责人"}</span>
+        <span className="muted">{owner?.name ?? (locale === "zh" ? "未分配负责人" : "No owner")}</span>
       </div>
       <h3>{project.name}</h3>
       <p>{project.description}</p>
       <div className="meta-grid">
-        <span>周期</span>
+        <span>{locale === "zh" ? "周期" : "Timeline"}</span>
         <strong>
           {formatDate(project.startDate)} - {formatDate(project.endDate)}
         </strong>
-        <span>任务进度</span>
+        <span>{locale === "zh" ? "任务进度" : "Task Progress"}</span>
         <strong>
-          {stats.doneTasks}/{stats.totalTasks} 已完成
+          {stats.doneTasks}/{stats.totalTasks} {locale === "zh" ? "已完成" : "done"}
         </strong>
-        <span>最后更新</span>
+        <span>{locale === "zh" ? "最后更新" : "Updated"}</span>
         <strong>{formatDate(project.updatedAt)}</strong>
       </div>
       <div className="chip-row">

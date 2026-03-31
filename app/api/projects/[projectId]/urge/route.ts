@@ -1,5 +1,6 @@
 import { notFound, ok } from "@/lib/api";
-import { getProjectById } from "@/lib/mock-data";
+import { prisma } from "@/lib/prisma";
+import { getProjectDetailData } from "@/lib/server-data";
 
 interface RouteContext {
   params: {
@@ -8,20 +9,34 @@ interface RouteContext {
 }
 
 export async function POST(request: Request, { params }: RouteContext) {
-  const project = getProjectById(params.projectId);
+  const detail = await getProjectDetailData(params.projectId);
 
-  if (!project) {
+  if (!detail) {
     return notFound("project not found");
   }
 
   const body = await request.json();
+  const created = await prisma.$transaction(
+    (body.receiverIds ?? []).map((receiverId: string) =>
+      prisma.projectUrge.create({
+        data: {
+          projectId: detail.project.id,
+          senderId: body.senderId ?? "user_1",
+          receiverId,
+          content: body.content ?? ""
+        }
+      })
+    )
+  );
 
   return ok({
-    id: crypto.randomUUID(),
-    projectId: project.id,
-    senderId: "user_1",
-    receiverIds: body.receiverIds ?? [],
-    content: body.content ?? "",
-    createdAt: new Date().toISOString()
+    list: created.map((item) => ({
+      id: item.id,
+      projectId: item.projectId,
+      senderId: item.senderId,
+      receiverIds: [item.receiverId],
+      content: item.content,
+      createdAt: item.createdAt.toISOString()
+    }))
   });
 }

@@ -1,5 +1,5 @@
 import { ok } from "@/lib/api";
-import { getProjects } from "@/lib/mock-data";
+import { createProjectData, listProjectsData } from "@/lib/server-data";
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -8,7 +8,8 @@ export async function GET(request: Request) {
   const page = Number(searchParams.get("page") ?? 1);
   const pageSize = Number(searchParams.get("pageSize") ?? 20);
 
-  const filtered = getProjects().filter((project) => {
+  const projects = await listProjectsData();
+  const filtered = projects.filter((project) => {
     if (keyword && !project.name.toLowerCase().includes(keyword)) {
       return false;
     }
@@ -33,15 +34,5 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   const body = await request.json();
 
-  return ok({
-    id: crypto.randomUUID(),
-    status: "ACTIVE",
-    visibilityScope: "PRIVATE",
-    participantIds: [],
-    shareUserIds: [],
-    tags: [],
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-    ...body
-  });
+  return ok(await createProjectData(body));
 }

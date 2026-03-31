@@ -1,5 +1,7 @@
 import { notFound, ok } from "@/lib/api";
-import { getProjectById } from "@/lib/mock-data";
+import { writeProjectLog } from "@/lib/activity-log";
+import { prisma } from "@/lib/prisma";
+import { getProjectDetailData } from "@/lib/server-data";
 
 interface RouteContext {
   params: {
@@ -8,14 +10,33 @@ interface RouteContext {
 }
 
 export async function POST(_request: Request, { params }: RouteContext) {
-  const project = getProjectById(params.projectId);
+  const detail = await getProjectDetailData(params.projectId);
 
-  if (!project) {
+  if (!detail) {
     return notFound("project not found");
   }
 
+  await prisma.project.update({
+    where: {
+      id: params.projectId
+    },
+    data: {
+      status: "ACTIVE",
+      closedAt: null
+    }
+  });
+  await writeProjectLog({
+    projectId: params.projectId,
+    activityType: "PROJECT_REOPENED",
+    contentSummary: `Reopened project ${detail.project.name}.`,
+    moduleName: "Project",
+    actionName: "ReopenProject",
+    beforeJson: { status: detail.project.status },
+    afterJson: { status: "ACTIVE" }
+  });
+
   return ok({
-    ...project,
+    ...detail.project,
     status: "ACTIVE",
     updatedAt: new Date().toISOString()
   });

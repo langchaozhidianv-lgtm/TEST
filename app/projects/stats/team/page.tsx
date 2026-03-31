@@ -1,6 +1,6 @@
 import { TeamStatsPage } from "@/components/project/team-stats-page";
-import { getTeamStats } from "@/lib/mock-data";
+import { getTeamStatsData } from "@/lib/server-data";
 
-export default function TeamStatsRoute() {
-  return <TeamStatsPage stats={getTeamStats()} />;
+export default async function TeamStatsRoute() {
+  return <TeamStatsPage stats={await getTeamStatsData()} />;
 }

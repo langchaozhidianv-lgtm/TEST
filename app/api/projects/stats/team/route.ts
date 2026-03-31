@@ -1,6 +1,6 @@
 import { ok } from "@/lib/api";
-import { getTeamStats } from "@/lib/mock-data";
+import { getTeamStatsData } from "@/lib/server-data";
 
 export async function GET() {
-  return ok(getTeamStats());
+  return ok(await getTeamStatsData());
 }

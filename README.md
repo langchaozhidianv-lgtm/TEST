@@ -1,51 +1,99 @@
-# 项目管理系统 MVP
+# Atlas Projects
 
-一个从空仓库搭起的可继续开发版本，目标是承接“项目 CRUD + 任务看板 + 甘特图 + 依赖关系 + 动态流 + 统计”这条主线。
+A runnable bilingual project management system built with Next.js, Prisma, and MySQL.
 
-## 已落地内容
+## Included Scope
 
-- Next.js + TypeScript 工程骨架
-- `prisma/schema.prisma`
-- MySQL 初始化 SQL：`prisma/migrations/0001_init/migration.sql`
-- REST API 详细文档：`docs/rest-api.md`
-- 页面路由与核心组件骨架
-- 本地 mock 数据驱动的最小展示版
-- 团队统计页、成员/共享面板、催办/转发/分享链接 API
+- Project list with search, filter, and sort
+- Project detail page
+- Task board with groups and cross-group move
+- Gantt view with schedule editing and dependency management
+- Activity feed and audit logs
+- Single-project stats and team stats
+- Members, viewers, relations, urge, and forward workflows
+- Chinese and English UI toggle
+- Prisma + MySQL persistence
 
-## 页面路由
+## Tech Stack
+
+- Next.js 14
+- React 18
+- TypeScript
+- Prisma
+- MySQL
+
+## Local Setup
+
+1. Install dependencies
+
+```bash
+npm install
+```
+
+2. Create `.env` from `.env.example`
+
+```env
+DATABASE_URL="mysql://root:password@localhost:3306/project_management"
+```
+
+3. Generate Prisma client
+
+```bash
+npm run prisma:generate
+```
+
+4. Push schema to MySQL
+
+```bash
+npm run db:push
+```
+
+5. Seed demo data
+
+```bash
+npm run db:seed
+```
+
+6. Start the app
+
+```bash
+npm run dev
+```
+
+7. Open the browser
+
+- [http://localhost:3000](http://localhost:3000)
+- [http://localhost:3000/projects](http://localhost:3000/projects)
+
+## Main Routes
 
 - `/projects`
 - `/projects/[projectId]`
 - `/projects/stats/team`
-- `/api/projects`
-- `/api/projects/[projectId]`
-- `/api/projects/[projectId]/members`
-- `/api/projects/[projectId]/shares`
-- `/api/projects/[projectId]/task-groups`
-- `/api/projects/[projectId]/share-link`
-- `/api/projects/[projectId]/urge`
-- `/api/projects/[projectId]/forward`
-- `/api/projects/[projectId]/tasks`
-- `/api/projects/[projectId]/gantt`
-- `/api/projects/[projectId]/stats`
-- `/api/projects/[projectId]/task-dependencies`
-- `/api/tasks/[taskId]`
-- `/api/tasks/[taskId]/complete`
-- `/api/tasks/[taskId]/comments`
 
-## 本地运行
+## API Highlights
 
-1. 安装依赖：`npm install`
-2. 启动开发环境：`npm run dev`
-3. 打开 [http://localhost:3000/projects](http://localhost:3000/projects)
+- `GET/POST /api/projects`
+- `GET/PUT/DELETE /api/projects/[projectId]`
+- `POST /api/projects/[projectId]/close`
+- `POST /api/projects/[projectId]/reopen`
+- `GET/POST /api/projects/[projectId]/tasks`
+- `PUT/DELETE /api/tasks/[taskId]`
+- `POST /api/tasks/[taskId]/move`
+- `POST /api/projects/[projectId]/tasks/batch-schedule`
+- `GET/POST /api/projects/[projectId]/task-dependencies`
 
-也可以直接访问 [http://localhost:3000](http://localhost:3000)，系统会自动跳转到项目列表。
+## Project Docs
 
-当前启动脚本已监听 `0.0.0.0:3000`，如果你在局域网内调试，也可以用这台机器的局域网 IP 访问。
+- [REST API](./docs/rest-api.md)
+- [Final Handoff](./docs/final-handoff.md)
+- [Acceptance Checklist](./docs/acceptance-checklist.md)
 
-## 下一步建议
+## Current Status
 
-- 把 mock 数据存储替换成 Prisma + MySQL
-- 补齐真实鉴权、权限校验、循环依赖校验和拖拽交互
-- 基于 `docs/rest-api.md` 继续补 OpenAPI 3.0 YAML
-- 把催办、转发、分享链接接入真实通知通道与权限策略
+The app is in a deliverable MVP-plus state:
+
+- Core CRUD is backed by MySQL
+- Major collaboration flows are available in the UI
+- Logging and activity tracking are enabled
+- Remaining work is mainly polish and advanced scheduling UX

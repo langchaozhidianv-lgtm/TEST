@@ -1,5 +1,5 @@
 import { notFound, ok } from "@/lib/api";
-import { getDependenciesByProject, getProjectById, getTasksByProject } from "@/lib/mock-data";
+import { getProjectDetailData } from "@/lib/server-data";
 
 interface RouteContext {
   params: {
@@ -8,15 +8,15 @@ interface RouteContext {
 }
 
 export async function GET(_request: Request, { params }: RouteContext) {
-  const project = getProjectById(params.projectId);
+  const detail = await getProjectDetailData(params.projectId);
 
-  if (!project) {
+  if (!detail) {
     return notFound("project not found");
   }
 
   return ok({
-    project,
-    tasks: getTasksByProject(project.id),
-    dependencies: getDependenciesByProject(project.id)
+    project: detail.project,
+    tasks: detail.tasks,
+    dependencies: detail.dependencies
   });
 }

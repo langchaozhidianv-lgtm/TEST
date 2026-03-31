@@ -1,22 +1,7 @@
 import { notFound } from "next/navigation";
 
 import { ProjectDetailPage } from "@/components/project/project-detail-page";
-import {
-  getActivitiesByProject,
-  getAuditLogsByProject,
-  getDependenciesByProject,
-  getProjectForwards,
-  getProjectById,
-  getProjectParticipants,
-  getProjectStats,
-  getProjectUrges,
-  getReadLogsByProject,
-  getRelationsByProject,
-  getTaskGroupsByProject,
-  getTasksByProject,
-  getProjectViewers,
-  createShareLink
-} from "@/lib/mock-data";
+import { getProjectDetailData } from "@/lib/server-data";
 
 interface ProjectDetailRouteProps {
   params: {
@@ -24,29 +9,29 @@ interface ProjectDetailRouteProps {
   };
 }
 
-export default function ProjectDetailRoute({ params }: ProjectDetailRouteProps) {
-  const project = getProjectById(params.projectId);
+export default async function ProjectDetailRoute({ params }: ProjectDetailRouteProps) {
+  const detail = await getProjectDetailData(params.projectId);
 
-  if (!project) {
+  if (!detail) {
     notFound();
   }
 
   return (
     <ProjectDetailPage
-      activities={getActivitiesByProject(project.id)}
-      auditLogs={getAuditLogsByProject(project.id)}
-      dependencies={getDependenciesByProject(project.id)}
-      groups={getTaskGroupsByProject(project.id)}
-      project={project}
-      participants={getProjectParticipants(project.id)}
-      readLogs={getReadLogsByProject(project.id)}
-      relations={getRelationsByProject(project.id)}
-      shareLink={createShareLink(project.id)}
-      stats={getProjectStats(project.id)}
-      tasks={getTasksByProject(project.id)}
-      viewers={getProjectViewers(project.id)}
-      urges={getProjectUrges(project.id)}
-      forwards={getProjectForwards(project.id)}
+      activities={detail.activities}
+      auditLogs={detail.auditLogs}
+      dependencies={detail.dependencies}
+      forwards={detail.forwards}
+      groups={detail.groups}
+      participants={detail.participants}
+      project={detail.project}
+      readLogs={detail.readLogs}
+      relations={detail.relations}
+      shareLink={detail.shareLink}
+      stats={detail.stats}
+      tasks={detail.tasks}
+      urges={detail.urges}
+      viewers={detail.viewers}
     />
   );
 }

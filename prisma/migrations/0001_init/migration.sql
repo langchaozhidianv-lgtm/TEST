@@ -2,6 +2,7 @@ CREATE TABLE `users` (
   `id` VARCHAR(50) NOT NULL,
   `name` VARCHAR(100) NOT NULL,
   `email` VARCHAR(255) NULL,
+  `department` VARCHAR(100) NULL,
   `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   UNIQUE INDEX `users_email_key`(`email`),
@@ -220,6 +221,20 @@ CREATE TABLE `project_urges` (
   CONSTRAINT `fk_project_urges_project` FOREIGN KEY (`project_id`) REFERENCES `projects`(`id`) ON DELETE CASCADE,
   CONSTRAINT `fk_project_urges_sender` FOREIGN KEY (`sender_id`) REFERENCES `users`(`id`) ON DELETE CASCADE,
   CONSTRAINT `fk_project_urges_receiver` FOREIGN KEY (`receiver_id`) REFERENCES `users`(`id`) ON DELETE CASCADE
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+CREATE TABLE `project_forwards` (
+  `id` VARCHAR(50) NOT NULL,
+  `project_id` VARCHAR(50) NOT NULL,
+  `sender_id` VARCHAR(50) NOT NULL,
+  `receiver_ids` JSON NOT NULL,
+  `message` TEXT NULL,
+  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  INDEX `idx_project_forwards_project_id`(`project_id`),
+  INDEX `idx_project_forwards_sender_id`(`sender_id`),
+  PRIMARY KEY (`id`),
+  CONSTRAINT `fk_project_forwards_project` FOREIGN KEY (`project_id`) REFERENCES `projects`(`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_project_forwards_sender` FOREIGN KEY (`sender_id`) REFERENCES `users`(`id`) ON DELETE CASCADE
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 CREATE TABLE `attachments` (

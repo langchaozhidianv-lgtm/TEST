@@ -1,5 +1,6 @@
 import { notFound, ok } from "@/lib/api";
-import { getCommentsByTask, getTaskById } from "@/lib/mock-data";
+import { prisma } from "@/lib/prisma";
+import { getTaskCommentsData, getTaskData } from "@/lib/server-data";
 
 interface RouteContext {
   params: {
@@ -8,31 +9,38 @@ interface RouteContext {
 }
 
 export async function GET(_request: Request, { params }: RouteContext) {
-  const task = getTaskById(params.taskId);
+  const task = await getTaskData(params.taskId);
 
   if (!task) {
     return notFound("task not found");
   }
 
   return ok({
-    list: getCommentsByTask(task.id)
+    list: await getTaskCommentsData(task.id)
   });
 }
 
 export async function POST(request: Request, { params }: RouteContext) {
-  const task = getTaskById(params.taskId);
+  const task = await getTaskData(params.taskId);
 
   if (!task) {
     return notFound("task not found");
   }
 
   const body = await request.json();
+  const created = await prisma.taskComment.create({
+    data: {
+      taskId: task.id,
+      userId: body.userId ?? "user_1",
+      content: body.content
+    }
+  });
 
   return ok({
-    id: crypto.randomUUID(),
-    taskId: task.id,
-    userId: "user_1",
-    createdAt: new Date().toISOString(),
-    ...body
+    id: created.id,
+    taskId: created.taskId,
+    userId: created.userId,
+    content: created.content,
+    createdAt: created.createdAt.toISOString()
   });
 }

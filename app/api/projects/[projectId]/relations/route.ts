@@ -1,5 +1,6 @@
 import { notFound, ok } from "@/lib/api";
-import { getProjectById, getRelationsByProject } from "@/lib/mock-data";
+import { prisma } from "@/lib/prisma";
+import { getProjectDetailData } from "@/lib/server-data";
 
 interface RouteContext {
   params: {
@@ -8,29 +9,42 @@ interface RouteContext {
 }
 
 export async function GET(_request: Request, { params }: RouteContext) {
-  const project = getProjectById(params.projectId);
+  const detail = await getProjectDetailData(params.projectId);
 
-  if (!project) {
+  if (!detail) {
     return notFound("project not found");
   }
 
   return ok({
-    list: getRelationsByProject(project.id)
+    list: detail.relations
   });
 }
 
 export async function POST(request: Request, { params }: RouteContext) {
-  const project = getProjectById(params.projectId);
+  const detail = await getProjectDetailData(params.projectId);
 
-  if (!project) {
+  if (!detail) {
     return notFound("project not found");
   }
 
   const body = await request.json();
+  const created = await prisma.projectRelation.create({
+    data: {
+      projectId: detail.project.id,
+      relationType: body.relationType,
+      targetId: body.targetId,
+      targetTitle: body.targetTitle,
+      sourceType: body.sourceType ?? null,
+      createdBy: body.createdBy ?? "user_1"
+    }
+  });
 
   return ok({
-    id: crypto.randomUUID(),
-    projectId: project.id,
-    ...body
+    id: created.id,
+    projectId: created.projectId,
+    relationType: created.relationType,
+    targetId: created.targetId,
+    targetTitle: created.targetTitle,
+    sourceType: created.sourceType ?? undefined
   });
 }

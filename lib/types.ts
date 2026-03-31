@@ -25,6 +25,9 @@ export type ActivityType =
   | "PROJECT_CLOSED"
   | "PROJECT_REOPENED"
   | "MEMBER_ADDED"
+  | "MEMBER_REMOVED"
+  | "SHARE_ADDED"
+  | "SHARE_REMOVED"
   | "TASK_CREATED"
   | "TASK_UPDATED"
   | "TASK_MOVED"
@@ -34,6 +37,7 @@ export type ActivityType =
   | "TASK_DEPENDENCY_DELETED"
   | "COMMENT_ADDED"
   | "RELATION_ADDED"
+  | "RELATION_REMOVED"
   | "URGED"
   | "FORWARDED";
 
