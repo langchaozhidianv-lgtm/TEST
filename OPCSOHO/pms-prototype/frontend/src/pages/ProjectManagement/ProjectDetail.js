@@ -25,6 +25,13 @@ const siteTypeMap = {
   ACCEPTANCE: "验收"
 };
 
+const contractTypeMap = {
+  SALES: "销售合同",
+  PROCUREMENT: "采购合同",
+  LABOR: "劳务合同",
+  CHANGE: "变更合同"
+};
+
 function sumBy(entries, predicate) {
   return entries.reduce((total, item) => (predicate(item) ? total + Number(item.amount || 0) : total), 0);
 }
@@ -93,22 +100,52 @@ export default function ProjectDetail() {
     [financeTransactions, selectedContract]
   );
 
-  const financeSummary = useMemo(() => ({
-    collection_plan_total: sumBy(contractScopedFinance, (item) => item.transaction_type === "COLLECTION_PLAN"),
-    collection_total: sumBy(contractScopedFinance, (item) => item.transaction_type === "COLLECTION"),
-    payment_plan_total: sumBy(contractScopedFinance, (item) => item.transaction_type === "PAYMENT_PLAN"),
-    pending_expense_total: sumBy(contractScopedFinance, (item) => item.direction === "EXPENSE" && ["PENDING", "APPROVED"].includes(item.status)),
-    paid_expense_total: sumBy(contractScopedFinance, (item) => item.direction === "EXPENSE" && item.status === "PAID"),
-    prepayment_total: sumBy(contractScopedFinance, (item) => item.transaction_type === "PREPAYMENT" && ["APPROVED", "PAID"].includes(item.status))
-  }), [contractScopedFinance]);
+  const financeSummary = useMemo(
+    () => ({
+      collection_plan_total: sumBy(contractScopedFinance, (item) => item.transaction_type === "COLLECTION_PLAN"),
+      collection_total: sumBy(contractScopedFinance, (item) => item.transaction_type === "COLLECTION"),
+      payment_plan_total: sumBy(contractScopedFinance, (item) => item.transaction_type === "PAYMENT_PLAN"),
+      pending_expense_total: sumBy(
+        contractScopedFinance,
+        (item) => item.direction === "EXPENSE" && ["PENDING", "APPROVED"].includes(item.status)
+      ),
+      paid_expense_total: sumBy(
+        contractScopedFinance,
+        (item) => item.direction === "EXPENSE" && item.status === "PAID"
+      ),
+      prepayment_total: sumBy(
+        contractScopedFinance,
+        (item) => item.transaction_type === "PREPAYMENT" && ["APPROVED", "PAID"].includes(item.status)
+      )
+    }),
+    [contractScopedFinance]
+  );
 
   const headlineMetrics = useMemo(() => {
     if (!project) return [];
 
     return [
       { label: "合同金额", value: formatCurrency(selectedContract?.amount || project.contract_amount) },
-      { label: "预算成本", value: formatCurrency(selectedContract ? contractCostSummary.totals.budget_total : detail?.costSummary?.totals?.budget_total || 0) },
-      { label: "实际成本", value: formatCurrency(selectedContract ? contractCostSummary.totals.actual_total : detail?.costSummary?.totals?.actual_total || 0) },
+      {
+        label: selectedContract ? "合同实收" : "项目回款金额",
+        value: formatCurrency(selectedContract?.actual_collection_amount || project.collected_amount || 0)
+      },
+      {
+        label: selectedContract ? "合同实付" : "项目成本金额",
+        value: formatCurrency(selectedContract?.actual_payment_amount || project.actual_cost_amount || 0)
+      },
+      {
+        label: "预算成本",
+        value: formatCurrency(
+          selectedContract ? contractCostSummary.totals.budget_total : detail?.costSummary?.totals?.budget_total || 0
+        )
+      },
+      {
+        label: "实际成本",
+        value: formatCurrency(
+          selectedContract ? contractCostSummary.totals.actual_total : detail?.costSummary?.totals?.actual_total || 0
+        )
+      },
       { label: "项目风险缺口", value: formatCurrency(detail?.financeSummary?.totals?.risk_gap || 0) }
     ];
   }, [project, selectedContract, contractCostSummary, detail]);
@@ -160,10 +197,12 @@ export default function ProjectDetail() {
         <article className="panel-card project-side-card">
           <div className="section-heading">
             <h2>当前视角</h2>
-            <span>{selectedContract ? `合同：${selectedContract.contract_name}` : "未选择具体合同"}</span>
+            <span>{selectedContract ? `合同：${selectedContract.contract_name}` : "当前为项目总览"}</span>
           </div>
           <div className="detail-actions">
-            <ActionButton variant="primary" onClick={() => navigate(`/projects/${id}/files`)}>查看文件校验</ActionButton>
+            <ActionButton variant="primary" onClick={() => navigate(`/projects/${id}/files`)}>
+              查看文件校验
+            </ActionButton>
             <ActionButton onClick={() => setSelectedContractId("")}>返回项目总览</ActionButton>
             <ActionButton onClick={() => navigate("/reports")}>进入报表中心</ActionButton>
             <ActionButton onClick={() => navigate("/projects")}>返回项目台账</ActionButton>
@@ -184,20 +223,25 @@ export default function ProjectDetail() {
         <article className="panel-card">
           <div className="section-heading">
             <h2>合同摘要</h2>
-            <span>点击“切换视角”驱动成本和财务联动</span>
+            <span>点击“切换视角”驱动成本和财务联动。</span>
           </div>
           <DataTable
             columns={[
               { key: "contract_code", title: "合同编号" },
-              { key: "contract_type", title: "类型" },
+              { key: "contract_type", title: "类型", render: (value) => contractTypeMap[value] || value },
               { key: "contract_name", title: "合同名称" },
               { key: "amount", title: "金额", render: (value) => formatCurrency(value) },
+              { key: "actual_collection_amount", title: "合同实收", render: (value) => formatCurrency(value) },
+              { key: "actual_payment_amount", title: "合同实付", render: (value) => formatCurrency(value) },
               { key: "status", title: "状态", render: (value) => <StatusBadge value={value} /> }
             ]}
             rows={contracts}
             actions={(row) => (
               <div className="btn-row">
-                <ActionButton variant={String(selectedContractId) === String(row.id) ? "primary" : "secondary"} onClick={() => setSelectedContractId(String(row.id))}>
+                <ActionButton
+                  variant={String(selectedContractId) === String(row.id) ? "primary" : "secondary"}
+                  onClick={() => setSelectedContractId(String(row.id))}
+                >
                   切换视角
                 </ActionButton>
               </div>
@@ -257,7 +301,7 @@ export default function ProjectDetail() {
         <article className="panel-card">
           <div className="section-heading">
             <h2>采购与现场动态</h2>
-            <span>保持项目级展示，不跟随合同切换</span>
+            <span>保持项目级展示，不跟随合同切换。</span>
           </div>
           <div className="grid two">
             <div className="list-item">
@@ -273,8 +317,10 @@ export default function ProjectDetail() {
               <div style={{ marginTop: 8, color: "#6e87a5" }}>{detail.siteSummary.totals.labor_count || 0} 条</div>
             </div>
             <div className="list-item">
-              <strong>安全/验收</strong>
-              <div style={{ marginTop: 8, color: "#6e87a5" }}>{(detail.siteSummary.totals.safety_count || 0) + (detail.siteSummary.totals.acceptance_count || 0)} 条</div>
+              <strong>安全 / 验收</strong>
+              <div style={{ marginTop: 8, color: "#6e87a5" }}>
+                {(detail.siteSummary.totals.safety_count || 0) + (detail.siteSummary.totals.acceptance_count || 0)} 条
+              </div>
             </div>
           </div>
           <div className="list-stack" style={{ marginTop: 16 }}>

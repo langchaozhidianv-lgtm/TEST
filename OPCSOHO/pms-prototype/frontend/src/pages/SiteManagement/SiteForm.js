@@ -9,8 +9,8 @@ const siteTypeLabels = {
   SHIPPING: "发运记录",
   MATERIAL: "材料动态",
   LABOR: "劳务管理",
-  SAFETY: "安全检查",
-  ACCEPTANCE: "验收记录"
+  SAFETY: "安全管理",
+  ACCEPTANCE: "验收管理"
 };
 
 const emptyState = {
@@ -27,19 +27,21 @@ const emptyState = {
   details: ""
 };
 
-export default function SiteForm({ initialValues, onSubmit, onCancel }) {
+export default function SiteForm({ initialValues, defaultRecordType = "LABOR", onSubmit, onCancel }) {
   const [form, setForm] = useState(emptyState);
   const { projectOptions } = useProjectContractOptions();
 
   useEffect(() => {
     setForm(() => {
-      const next = initialValues ? { ...emptyState, ...initialValues } : { ...emptyState };
+      const next = initialValues
+        ? { ...emptyState, record_type: defaultRecordType, ...initialValues }
+        : { ...emptyState, record_type: defaultRecordType };
       if (!next.project_id && projectOptions[0]) {
         next.project_id = projectOptions[0].value;
       }
       return next;
     });
-  }, [initialValues, projectOptions]);
+  }, [initialValues, projectOptions, defaultRecordType]);
 
   const handleChange = (event) => {
     setForm((prev) => ({ ...prev, [event.target.name]: event.target.value }));
@@ -69,42 +71,15 @@ export default function SiteForm({ initialValues, onSubmit, onCancel }) {
               ))}
             </select>
           </label>
-          <label className="form-field">
-            <span>标题</span>
-            <input name="title" value={form.title} onChange={handleChange} required />
-          </label>
-          <label className="form-field">
-            <span>供应商 / 班组</span>
-            <input name="vendor_or_team" value={form.vendor_or_team} onChange={handleChange} />
-          </label>
-          <label className="form-field">
-            <span>状态</span>
-            <input name="status" value={form.status} onChange={handleChange} />
-          </label>
-          <label className="form-field">
-            <span>计划日期</span>
-            <input type="date" name="planned_date" value={form.planned_date || ""} onChange={handleChange} />
-          </label>
-          <label className="form-field">
-            <span>实际日期</span>
-            <input type="date" name="actual_date" value={form.actual_date || ""} onChange={handleChange} />
-          </label>
-          <label className="form-field">
-            <span>金额</span>
-            <input name="amount" value={form.amount} onChange={handleChange} />
-          </label>
-          <label className="form-field">
-            <span>数量</span>
-            <input name="quantity" value={form.quantity} onChange={handleChange} />
-          </label>
-          <label className="form-field">
-            <span>单位</span>
-            <input name="unit" value={form.unit} onChange={handleChange} />
-          </label>
-          <label className="form-field full">
-            <span>详细说明</span>
-            <textarea name="details" rows="3" value={form.details} onChange={handleChange} />
-          </label>
+          <label className="form-field"><span>标题</span><input name="title" value={form.title} onChange={handleChange} required /></label>
+          <label className="form-field"><span>供应商 / 班组</span><input name="vendor_or_team" value={form.vendor_or_team} onChange={handleChange} /></label>
+          <label className="form-field"><span>状态</span><input name="status" value={form.status} onChange={handleChange} /></label>
+          <label className="form-field"><span>计划日期</span><input type="date" name="planned_date" value={form.planned_date || ""} onChange={handleChange} /></label>
+          <label className="form-field"><span>实际日期</span><input type="date" name="actual_date" value={form.actual_date || ""} onChange={handleChange} /></label>
+          <label className="form-field"><span>金额</span><input name="amount" value={form.amount} onChange={handleChange} /></label>
+          <label className="form-field"><span>数量</span><input name="quantity" value={form.quantity} onChange={handleChange} /></label>
+          <label className="form-field"><span>单位</span><input name="unit" value={form.unit} onChange={handleChange} /></label>
+          <label className="form-field full"><span>详细说明</span><textarea name="details" rows="3" value={form.details} onChange={handleChange} /></label>
         </div>
         <div className="form-actions">
           <ActionButton variant="primary" type="submit">保存</ActionButton>

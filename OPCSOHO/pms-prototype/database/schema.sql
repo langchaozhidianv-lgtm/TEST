@@ -17,6 +17,7 @@ CREATE TABLE projects (
   planned_end_date DATE,
   shipped_amount DECIMAL(14,2) NOT NULL DEFAULT 0,
   collected_amount DECIMAL(14,2) NOT NULL DEFAULT 0,
+  actual_cost_amount DECIMAL(14,2) NOT NULL DEFAULT 0,
   contract_amount DECIMAL(14,2) NOT NULL DEFAULT 0,
   description TEXT,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -34,6 +35,20 @@ CREATE TABLE project_documents (
   FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE
 );
 
+CREATE TABLE project_tasks (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  project_id INT NOT NULL,
+  phase VARCHAR(100) NOT NULL,
+  task_name VARCHAR(255) NOT NULL,
+  assignee_role VARCHAR(100),
+  status ENUM('PENDING', 'IN_PROGRESS', 'COMPLETED', 'DELAYED') NOT NULL DEFAULT 'PENDING',
+  source_ref VARCHAR(100),
+  description TEXT,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE
+);
+
 CREATE TABLE contracts (
   id INT PRIMARY KEY AUTO_INCREMENT,
   project_id INT NOT NULL,
@@ -44,6 +59,9 @@ CREATE TABLE contracts (
   amount DECIMAL(14,2) NOT NULL,
   tax_rate DECIMAL(5,2) NOT NULL DEFAULT 13.00,
   payment_terms VARCHAR(255),
+  collection_stages TEXT,
+  actual_collection_amount DECIMAL(14,2) NOT NULL DEFAULT 0,
+  actual_payment_amount DECIMAL(14,2) NOT NULL DEFAULT 0,
   signed_date DATE,
   status ENUM('DRAFT', 'APPROVED', 'EXECUTING', 'COMPLETED', 'CHANGED') NOT NULL DEFAULT 'APPROVED',
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -87,6 +105,7 @@ CREATE TABLE finance_transactions (
   contract_id INT NULL,
   transaction_type ENUM('COLLECTION_PLAN', 'COLLECTION', 'PAYMENT_PLAN', 'PAYMENT_REQUEST', 'REIMBURSEMENT', 'WAGE_DISBURSEMENT', 'PREPAYMENT') NOT NULL,
   direction ENUM('INCOME', 'EXPENSE') NOT NULL,
+  collection_stage VARCHAR(120),
   amount DECIMAL(14,2) NOT NULL,
   due_date DATE NULL,
   transaction_date DATE NULL,
@@ -129,5 +148,32 @@ CREATE TABLE site_records (
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE
+);
+
+CREATE TABLE collaboration_items (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  project_id INT NOT NULL,
+  task_id INT NULL,
+  team VARCHAR(100) NOT NULL,
+  topic VARCHAR(255) NOT NULL,
+  assignee VARCHAR(100),
+  due_date DATE NULL,
+  status ENUM('PENDING', 'IN_PROGRESS', 'COMPLETED', 'DELAYED') NOT NULL DEFAULT 'PENDING',
+  notes TEXT,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE,
+  FOREIGN KEY (task_id) REFERENCES project_tasks(id) ON DELETE SET NULL
+);
+
+CREATE TABLE collaboration_attachments (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  collaboration_item_id INT NOT NULL,
+  file_name VARCHAR(255) NOT NULL,
+  file_path VARCHAR(255) NOT NULL,
+  mime_type VARCHAR(120),
+  file_size INT NOT NULL DEFAULT 0,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (collaboration_item_id) REFERENCES collaboration_items(id) ON DELETE CASCADE
 );
 

@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from "react";
+import React, { useContext, useEffect, useMemo, useState } from "react";
 import DataTable from "../../components/Common/DataTable";
 import ActionButton from "../../components/Common/ActionButton";
 import StatusBadge from "../../components/Common/StatusBadge";
@@ -21,14 +21,48 @@ const typeLabels = {
   ACCEPTANCE: "验收"
 };
 
-export default function SiteList() {
+const siteViewMeta = {
+  LABOR: {
+    title: "劳务管理",
+    subtitle: "跟踪劳务班组、施工安排和劳务执行状态。",
+    button: "新建劳务记录",
+    types: ["LABOR"],
+    defaultType: "LABOR"
+  },
+  SAFETY: {
+    title: "安全管理",
+    subtitle: "维护安全检查、安全交底和现场安全事项。",
+    button: "新建安全记录",
+    types: ["SAFETY"],
+    defaultType: "SAFETY"
+  },
+  ACCEPTANCE: {
+    title: "验收管理",
+    subtitle: "维护分阶段验收和项目交付验收记录。",
+    button: "新建验收记录",
+    types: ["ACCEPTANCE"],
+    defaultType: "ACCEPTANCE"
+  },
+  RECORDS: {
+    title: "现场记录",
+    subtitle: "综合查看现场与劳务相关记录，不含采购执行模块。",
+    button: "新建现场记录",
+    types: ["LABOR", "SAFETY", "ACCEPTANCE"],
+    defaultType: "LABOR"
+  }
+};
+
+export default function SiteList({ view = "LABOR" }) {
   const [items, setItems] = useState([]);
   const [editing, setEditing] = useState(null);
   const { showError } = useContext(AppContext);
 
+  const meta = siteViewMeta[view] || siteViewMeta.LABOR;
+
   const loadData = async () => {
     try {
-      setItems(await fetchSiteRecords());
+      const rows = await fetchSiteRecords();
+      setItems(rows.filter((item) => meta.types.includes(item.record_type)));
     } catch (error) {
       setItems([]);
       showError("现场数据加载失败", error);
@@ -37,14 +71,18 @@ export default function SiteList() {
 
   useEffect(() => {
     loadData();
-  }, []);
+  }, [view]);
 
   const handleSubmit = async (payload) => {
     try {
+      const nextPayload = {
+        ...payload,
+        record_type: payload.record_type || meta.defaultType
+      };
       if (editing?.id) {
-        await updateSiteRecord(editing.id, payload);
+        await updateSiteRecord(editing.id, nextPayload);
       } else {
-        await createSiteRecord(payload);
+        await createSiteRecord(nextPayload);
       }
       setEditing(null);
       loadData();
@@ -62,21 +100,41 @@ export default function SiteList() {
     }
   };
 
+  const summary = useMemo(() => {
+    const totalAmount = items.reduce((sum, item) => sum + Number(item.amount || 0), 0);
+    const completed = items.filter((item) => item.status === "COMPLETED").length;
+    return [
+      { label: "记录数量", value: items.length },
+      { label: "累计金额", value: formatCurrency(totalAmount) },
+      { label: "已完成", value: completed }
+    ];
+  }, [items]);
+
   return (
     <div className="grid">
       <section className="hero-band">
         <div>
-          <h1 className="page-title">现场与劳务管理</h1>
-          <p className="page-subtitle">
-            跟踪劳务、安全、验收与现场执行记录，支撑施工阶段的过程管控。
-          </p>
+          <h1 className="page-title">{meta.title}</h1>
+          <p className="page-subtitle">{meta.subtitle}</p>
         </div>
-        <ActionButton variant="primary" onClick={() => setEditing({})}>新建现场记录</ActionButton>
+        <ActionButton variant="primary" onClick={() => setEditing({ record_type: meta.defaultType })}>
+          {meta.button}
+        </ActionButton>
+      </section>
+
+      <section className="grid three">
+        {summary.map((item) => (
+          <div className="panel-card" key={item.label}>
+            <span className="card-subtitle">{item.label}</span>
+            <div className="metric-value">{item.value}</div>
+          </div>
+        ))}
       </section>
 
       {editing !== null ? (
         <SiteForm
-          initialValues={editing.id ? editing : null}
+          defaultRecordType={meta.defaultType}
+          initialValues={editing.id ? editing : editing}
           onSubmit={handleSubmit}
           onCancel={() => setEditing(null)}
         />
@@ -84,15 +142,15 @@ export default function SiteList() {
 
       <section className="panel-card">
         <div className="section-heading">
-          <h2>现场台账</h2>
-          <span>统一查看采购、发运、劳务、安全和验收记录</span>
+          <h2>{meta.title}台账</h2>
+          <span>当前列表仅展示与本二级菜单对应的现场记录。</span>
         </div>
         <DataTable
           columns={[
-            { key: "project_name", title: "项目" },
+            { key: "project_name", title: "项目名称" },
             { key: "record_type", title: "记录类型", render: (value) => typeLabels[value] || value },
             { key: "title", title: "标题" },
-            { key: "vendor_or_team", title: "供应商/班组" },
+            { key: "vendor_or_team", title: "供应商 / 班组" },
             { key: "planned_date", title: "计划日期", render: (value) => formatDate(value) },
             { key: "amount", title: "金额", render: (value) => formatCurrency(value) },
             { key: "status", title: "状态", render: (value) => <StatusBadge value={value} /> }

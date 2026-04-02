@@ -1,4 +1,18 @@
-﻿const db = require("../config/db");
+const db = require("../config/db");
+
+function normalizeStages(value) {
+  if (Array.isArray(value)) {
+    return value.map((item) => String(item || "").trim()).filter(Boolean).join("\n") || null;
+  }
+
+  const normalized = String(value || "")
+    .split(/\r?\n|,|，|;|；/)
+    .map((item) => item.trim())
+    .filter(Boolean)
+    .join("\n");
+
+  return normalized || null;
+}
 
 async function getAllContracts(filters = {}) {
   let sql = `
@@ -38,8 +52,8 @@ async function getContractById(id) {
 async function createContract(payload) {
   const [result] = await db.query(
     `INSERT INTO contracts
-      (project_id, contract_code, contract_type, contract_name, counterparty_name, amount, tax_rate, payment_terms, signed_date, status)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      (project_id, contract_code, contract_type, contract_name, counterparty_name, amount, tax_rate, payment_terms, collection_stages, actual_collection_amount, actual_payment_amount, signed_date, status)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       payload.project_id,
       payload.contract_code,
@@ -49,6 +63,9 @@ async function createContract(payload) {
       payload.amount,
       payload.tax_rate || 13,
       payload.payment_terms || null,
+      normalizeStages(payload.collection_stages),
+      payload.actual_collection_amount || 0,
+      payload.actual_payment_amount || 0,
       payload.signed_date || null,
       payload.status || "APPROVED"
     ]
@@ -60,7 +77,7 @@ async function updateContract(id, payload) {
   await db.query(
     `UPDATE contracts SET
       project_id = ?, contract_code = ?, contract_type = ?, contract_name = ?, counterparty_name = ?,
-      amount = ?, tax_rate = ?, payment_terms = ?, signed_date = ?, status = ?
+      amount = ?, tax_rate = ?, payment_terms = ?, collection_stages = ?, actual_collection_amount = ?, actual_payment_amount = ?, signed_date = ?, status = ?
      WHERE id = ?`,
     [
       payload.project_id,
@@ -71,6 +88,9 @@ async function updateContract(id, payload) {
       payload.amount,
       payload.tax_rate || 13,
       payload.payment_terms || null,
+      normalizeStages(payload.collection_stages),
+      payload.actual_collection_amount || 0,
+      payload.actual_payment_amount || 0,
       payload.signed_date || null,
       payload.status || "APPROVED",
       id

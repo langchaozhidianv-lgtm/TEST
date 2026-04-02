@@ -11,7 +11,7 @@ router.get("/:id", controller.getProject);
 router.get("/:id/validate-documents", controller.validateDocuments);
 router.post(
   "/",
-  validateRequired(["project_code", "name", "project_type", "customer_name", "division_name", "project_manager"]),
+  validateRequired(["name", "project_type", "customer_name", "division_name", "project_manager"]),
   controller.createProject
 );
 router.put(

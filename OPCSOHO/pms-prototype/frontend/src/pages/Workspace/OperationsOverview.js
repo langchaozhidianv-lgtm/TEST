@@ -18,6 +18,15 @@ const emptyFocus = {
   status: "IN_PROGRESS"
 };
 
+const statusLabelMap = {
+  PLANNING: "计划中",
+  IN_PROGRESS: "执行中",
+  DELAYED: "已延期",
+  ACCEPTANCE: "验收中",
+  WARRANTY: "质保中",
+  CLOSED: "已完结"
+};
+
 export default function OperationsOverview() {
   const { dashboard, loadDashboard, loading } = useContext(AppContext);
   const [projects, setProjects] = useState([]);
@@ -57,6 +66,81 @@ export default function OperationsOverview() {
     { label: "合同总金额", value: formatCurrency(metrics.totalContractAmount || 0) },
     { label: "累计回款金额", value: formatCurrency(metrics.totalCollectedAmount || 0) }
   ];
+
+  const statusSummary = useMemo(() => {
+    const rows = [
+      { key: "PLANNING", color: "#8fa4bd" },
+      { key: "IN_PROGRESS", color: "#2f8cff" },
+      { key: "DELAYED", color: "#f05f6d" },
+      { key: "ACCEPTANCE", color: "#f5ab2f" },
+      { key: "WARRANTY", color: "#32c49a" },
+      { key: "CLOSED", color: "#18a36f" }
+    ]
+      .map((item) => {
+        const count = projects.filter((project) => project.status === item.key).length;
+        return {
+          ...item,
+          label: statusLabelMap[item.key] || item.key,
+          count
+        };
+      })
+      .filter((item) => item.count > 0);
+
+    const total = rows.reduce((sum, item) => sum + item.count, 0) || 1;
+    return rows.map((item) => ({
+      ...item,
+      percent: (item.count / total) * 100
+    }));
+  }, [projects]);
+
+  const operatingBars = useMemo(() => {
+    const contract = Number(metrics.totalContractAmount || 0);
+    const collected = Number(metrics.totalCollectedAmount || 0);
+    const pendingPayment = financeItems
+      .filter((item) => ["PAYMENT_REQUEST", "PAYMENT_PLAN"].includes(item.transaction_type))
+      .reduce((sum, item) => sum + Number(item.amount || 0), 0);
+    const activeFocus = focusItems.filter((item) => ["PENDING", "IN_PROGRESS", "DELAYED"].includes(item.status)).length;
+
+    const rows = [
+      { label: "合同总额", value: contract, tone: "blue", isCurrency: true },
+      { label: "累计回款", value: collected, tone: "green", isCurrency: true },
+      { label: "待支付金额", value: pendingPayment, tone: "amber", isCurrency: true },
+      { label: "经营重点事项", value: activeFocus, tone: "red", isCurrency: false }
+    ];
+    const max = Math.max(...rows.map((item) => item.value), 1);
+
+    return rows.map((item) => ({
+      ...item,
+      percent: Math.max((item.value / max) * 100, item.value > 0 ? 10 : 0)
+    }));
+  }, [metrics, financeItems, focusItems]);
+
+  const collectionTrend = useMemo(() => {
+    const topProjects = [...projects]
+      .sort((a, b) => Number(b.contract_amount || 0) - Number(a.contract_amount || 0))
+      .slice(0, 5);
+    const max = Math.max(
+      ...topProjects.map((item) => Math.max(Number(item.contract_amount || 0), Number(item.collected_amount || 0))),
+      1
+    );
+
+    return topProjects.map((item) => ({
+      id: item.id,
+      label: item.project_code || item.name,
+      contractHeight: (Number(item.contract_amount || 0) / max) * 100,
+      collectedHeight: (Number(item.collected_amount || 0) / max) * 100
+    }));
+  }, [projects]);
+
+  const focusStatusSummary = useMemo(
+    () => [
+      { label: "待处理", value: focusItems.filter((item) => item.status === "PENDING").length },
+      { label: "执行中", value: focusItems.filter((item) => item.status === "IN_PROGRESS").length },
+      { label: "已延期", value: focusItems.filter((item) => item.status === "DELAYED").length },
+      { label: "已完成", value: focusItems.filter((item) => item.status === "COMPLETED").length }
+    ],
+    [focusItems]
+  );
 
   const paymentRequests = useMemo(
     () =>
@@ -101,6 +185,90 @@ export default function OperationsOverview() {
             <div className="metric-value">{loading ? "..." : card.value}</div>
           </div>
         ))}
+      </section>
+
+      <section className="operations-cockpit-grid">
+        <article className="panel-card operations-cockpit-panel">
+          <div className="section-heading">
+            <h2>经营状态分布</h2>
+            <span>项目执行状态在总览页直接透出</span>
+          </div>
+          <div className="operations-status-grid">
+            {statusSummary.length ? statusSummary.map((item) => (
+              <div className="operations-status-row" key={item.key}>
+                <div className="operations-status-meta">
+                  <div className="operations-status-title">
+                    <span className="cockpit-legend-dot" style={{ background: item.color }} />
+                    <strong>{item.label}</strong>
+                  </div>
+                  <span>{item.count} 个项目</span>
+                </div>
+                <div className="cockpit-bar-track">
+                  <div className="operations-status-fill" style={{ width: `${item.percent}%`, background: item.color }} />
+                </div>
+              </div>
+            )) : (
+              <div className="project-video-box">暂无项目状态数据</div>
+            )}
+          </div>
+        </article>
+
+        <article className="panel-card operations-cockpit-panel">
+          <div className="section-heading">
+            <h2>经营驾驶指标</h2>
+            <span>把合同、回款、支付和重点事项放到一个口径里</span>
+          </div>
+          <div className="cockpit-bar-list">
+            {operatingBars.map((item) => (
+              <div className="cockpit-bar-row" key={item.label}>
+                <div className="cockpit-bar-meta">
+                  <strong>{item.label}</strong>
+                  <span>{item.isCurrency ? formatCurrency(item.value) : `${item.value} 项`}</span>
+                </div>
+                <div className="cockpit-bar-track">
+                  <div className={`cockpit-bar-fill ${item.tone}`} style={{ width: `${item.percent}%` }} />
+                </div>
+              </div>
+            ))}
+          </div>
+        </article>
+
+        <article className="panel-card operations-cockpit-panel">
+          <div className="section-heading">
+            <h2>合同与回款对照</h2>
+            <span>按合同规模前 5 个项目抽样</span>
+          </div>
+          {collectionTrend.length ? (
+            <div className="operations-column-chart">
+              {collectionTrend.map((item) => (
+                <div className="cockpit-column-group" key={item.id}>
+                  <div className="cockpit-column-bars">
+                    <div className="cockpit-column shipped" style={{ height: `${item.contractHeight}%` }} />
+                    <div className="cockpit-column collected" style={{ height: `${item.collectedHeight}%` }} />
+                  </div>
+                  <span>{item.label}</span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="project-video-box">暂无合同与回款数据</div>
+          )}
+        </article>
+
+        <article className="panel-card operations-cockpit-panel">
+          <div className="section-heading">
+            <h2>重点事项温度</h2>
+            <span>经营关注事项先看热度，再看明细</span>
+          </div>
+          <div className="operations-focus-matrix">
+            {focusStatusSummary.map((item) => (
+              <div className="operations-focus-chip" key={item.label}>
+                <strong>{item.value}</strong>
+                <span>{item.label}</span>
+              </div>
+            ))}
+          </div>
+        </article>
       </section>
 
       <section className="workspace-grid">

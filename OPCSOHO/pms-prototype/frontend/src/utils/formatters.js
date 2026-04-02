@@ -10,3 +10,7 @@ export function formatDate(value) {
   if (!value) return "-";
   return new Date(value).toLocaleDateString("zh-CN");
 }
+
+export function formatPercent(value) {
+  return `${Number(value || 0).toFixed(1)}%`;
+}

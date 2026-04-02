@@ -72,7 +72,7 @@ export default function ProcurementList() {
         <div>
           <h1 className="page-title">采购执行</h1>
           <p className="page-subtitle">
-            聚焦采购、发运和材料动态维护，顶部入口现在就是完整可编辑工作区。
+            模块内保留采购执行、发运记录、材料动态三种切换，便于沿业务链路处理交付。
           </p>
         </div>
         <ActionButton variant="primary" onClick={() => setEditing({ record_type: filter })}>
@@ -80,19 +80,29 @@ export default function ProcurementList() {
         </ActionButton>
       </section>
 
-      <div className="toolbar">
-        <div className="filters">
-          <select value={filter} onChange={(event) => setFilter(event.target.value)}>
-            <option value="PROCUREMENT">采购执行</option>
-            <option value="SHIPPING">发运记录</option>
-            <option value="MATERIAL">材料动态</option>
-          </select>
+      <section className="panel-card">
+        <div className="section-heading">
+          <h2>模块内切换</h2>
+          <span>采购执行暂保留页内切换，不纳入左侧全局二级菜单。</span>
+        </div>
+        <div className="module-switches">
+          {procurementTypes.map((item) => (
+            <button
+              key={item}
+              type="button"
+              className={`module-switch ${filter === item ? "active" : ""}`}
+              onClick={() => setFilter(item)}
+            >
+              {typeLabels[item]}
+            </button>
+          ))}
           <ActionButton onClick={loadData}>刷新</ActionButton>
         </div>
-      </div>
+      </section>
 
       {editing !== null ? (
         <SiteForm
+          defaultRecordType={filter}
           initialValues={editing.id ? editing : editing}
           onSubmit={handleSubmit}
           onCancel={() => setEditing(null)}
@@ -101,8 +111,8 @@ export default function ProcurementList() {
 
       <section className="panel-card">
         <div className="section-heading">
-          <h2>采购执行台账</h2>
-          <span>按采购执行、发运记录和材料动态三类维护</span>
+          <h2>{typeLabels[filter]}台账</h2>
+          <span>当前列表仅展示所选模块的数据。</span>
         </div>
         <DataTable
           columns={[

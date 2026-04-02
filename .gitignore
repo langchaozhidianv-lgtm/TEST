@@ -4,3 +4,6 @@ node_modules
 .env.local
 dist
 coverage
+*.log
+*.zip
+OPCSOHO/pms-prototype/frontend/build/

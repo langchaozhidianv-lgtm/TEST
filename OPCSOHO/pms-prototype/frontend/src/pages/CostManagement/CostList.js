@@ -22,12 +22,41 @@ const categoryMap = {
   OTHER: "其他"
 };
 
-export default function CostList() {
+const versionLabels = {
+  SIGNED: "签约成本",
+  BUDGET: "预算成本",
+  ACTUAL: "实际成本"
+};
+
+const costViewMeta = {
+  VERSIONS: {
+    title: "三版本成本",
+    subtitle: "集中查看签约、预算、实际三版本成本对比。",
+    button: "新建成本录入",
+    showSummary: true
+  },
+  CATEGORIES: {
+    title: "成本科目",
+    subtitle: "按成本科目汇总项目成本，便于科目口径核对。",
+    button: "新建科目录入",
+    showSummary: false
+  },
+  MATERIALS: {
+    title: "剩余材料",
+    subtitle: "管理项目剩余材料、处置状态和回收价值。",
+    button: "新建剩余材料",
+    showSummary: false
+  }
+};
+
+export default function CostList({ view = "VERSIONS" }) {
   const [costs, setCosts] = useState([]);
   const [editing, setEditing] = useState(null);
   const [comparison, setComparison] = useState(null);
   const [projectId, setProjectId] = useState("1");
   const { showError } = useContext(AppContext);
+
+  const meta = costViewMeta[view] || costViewMeta.VERSIONS;
 
   const loadData = async () => {
     try {
@@ -46,11 +75,23 @@ export default function CostList() {
 
   useEffect(() => {
     loadData();
-  }, [projectId]);
+  }, [projectId, view]);
+
+  const filteredCosts = useMemo(() => {
+    if (view === "VERSIONS") {
+      return costs.filter((item) => ["SIGNED", "BUDGET", "ACTUAL"].includes(item.version_type));
+    }
+    if (view === "CATEGORIES") {
+      return costs;
+    }
+    return [];
+  }, [costs, view]);
 
   const handleSubmit = async (payload) => {
     try {
-      if (editing?.id) {
+      if (view === "MATERIALS") {
+        await createRemainingMaterial(payload);
+      } else if (editing?.id) {
         await updateCost(editing.id, payload);
       } else {
         await createCost(payload);
@@ -59,24 +100,6 @@ export default function CostList() {
       loadData();
     } catch (error) {
       showError("成本保存失败", error);
-    }
-  };
-
-  const quickAddRemaining = async () => {
-    try {
-      await createRemainingMaterial({
-        project_id: projectId,
-        material_name: "示例剩余材料",
-        specification: "现场余量",
-        quantity: 10,
-        unit: "件",
-        estimated_value: 5000,
-        status: "REUSABLE",
-        disposal_notes: "用于演示剩余材料回收管理"
-      });
-      loadData();
-    } catch (error) {
-      showError("剩余材料新增失败", error);
     }
   };
 
@@ -91,7 +114,6 @@ export default function CostList() {
 
   const summary = useMemo(() => {
     if (!comparison?.comparison) return [];
-
     const totals = comparison.comparison.reduce(
       (acc, item) => {
         acc.signed += Number(item.signed_cost || 0);
@@ -110,18 +132,26 @@ export default function CostList() {
     ];
   }, [comparison]);
 
+  const groupedByCategory = useMemo(() => {
+    const map = filteredCosts.reduce((acc, item) => {
+      const key = item.cost_category;
+      acc[key] = (acc[key] || 0) + Number(item.amount || 0);
+      return acc;
+    }, {});
+    return Object.entries(map).map(([key, amount]) => ({ key, amount }));
+  }, [filteredCosts]);
+
   return (
     <div className="grid">
       <section className="hero-band">
         <div>
-          <h1 className="page-title">成本管理</h1>
-          <p className="page-subtitle">
-            管理签约、预算、实际三版本成本，并联动剩余材料数据，支撑经营分析和预算校核。
-          </p>
+          <h1 className="page-title">{meta.title}</h1>
+          <p className="page-subtitle">{meta.subtitle}</p>
         </div>
         <div className="hero-actions">
-          <ActionButton onClick={quickAddRemaining}>新增剩余材料</ActionButton>
-          <ActionButton variant="primary" onClick={() => setEditing({ project_id: projectId })}>新建成本</ActionButton>
+          <ActionButton variant="primary" onClick={() => setEditing({ project_id: projectId })}>
+            {meta.button}
+          </ActionButton>
         </div>
       </section>
 
@@ -130,26 +160,37 @@ export default function CostList() {
           <input
             value={projectId}
             onChange={(event) => setProjectId(event.target.value)}
-            placeholder="输入项目 ID 查看对比"
+            placeholder="输入项目 ID 查看当前项目"
           />
-          <ActionButton onClick={loadData}>刷新对比</ActionButton>
+          <ActionButton onClick={loadData}>刷新</ActionButton>
         </div>
       </div>
 
-      <section className="grid four">
-        {summary.map((item) => (
-          <div className="panel-card" key={item.label}>
-            <span className="card-subtitle">{item.label}</span>
-            <div className="metric-value">{item.value}</div>
-          </div>
-        ))}
-      </section>
+      {meta.showSummary ? (
+        <section className="grid four">
+          {summary.map((item) => (
+            <div className="panel-card" key={item.label}>
+              <span className="card-subtitle">{item.label}</span>
+              <div className="metric-value">{item.value}</div>
+            </div>
+          ))}
+        </section>
+      ) : null}
 
-      {comparison ? (
+      {editing !== null ? (
+        <CostForm
+          view={view}
+          initialValues={editing.id ? editing : editing}
+          onSubmit={handleSubmit}
+          onCancel={() => setEditing(null)}
+        />
+      ) : null}
+
+      {view === "VERSIONS" && comparison ? (
         <section className="panel-card">
           <div className="section-heading">
             <h2>三版本成本对比</h2>
-            <span>项目 {projectId} 的成本执行情况</span>
+            <span>项目 {projectId} 的签约、预算、实际成本执行情况。</span>
           </div>
           <div className="grid three">
             {comparison.comparison.map((item) => (
@@ -161,47 +202,69 @@ export default function CostList() {
               </div>
             ))}
           </div>
-          <div style={{ marginTop: 16 }}>
-            <strong>剩余材料：</strong>
-            {" "}
-            {comparison.remainingMaterials?.length
-              ? comparison.remainingMaterials.map((item) => `${item.material_name}（${item.status}）`).join("、")
-              : "暂无"}
+        </section>
+      ) : null}
+
+      {view === "CATEGORIES" ? (
+        <section className="panel-card">
+          <div className="section-heading">
+            <h2>成本科目汇总</h2>
+            <span>按科目汇总当前项目的成本金额。</span>
+          </div>
+          <div className="grid three">
+            {groupedByCategory.map((item) => (
+              <div key={item.key} className="list-item">
+                <strong>{categoryMap[item.key] || item.key}</strong>
+                <div style={{ marginTop: 8, color: "#6e87a5" }}>{formatCurrency(item.amount)}</div>
+              </div>
+            ))}
           </div>
         </section>
       ) : null}
 
-      {editing !== null ? (
-        <CostForm
-          initialValues={editing.id ? editing : null}
-          onSubmit={handleSubmit}
-          onCancel={() => setEditing(null)}
-        />
-      ) : null}
-
-      <section className="panel-card">
-        <div className="section-heading">
-          <h2>成本台账</h2>
-          <span>按项目、版本和科目跟踪成本录入</span>
-        </div>
-        <DataTable
-          columns={[
-            { key: "project_name", title: "项目" },
-            { key: "version_type", title: "版本类型" },
-            { key: "cost_category", title: "成本科目", render: (value) => categoryMap[value] || value },
-            { key: "amount", title: "金额", render: (value) => formatCurrency(value) },
-            { key: "entry_date", title: "录入日期" },
-            { key: "source_ref", title: "来源单号" }
-          ]}
-          rows={costs}
-          actions={(row) => (
-            <div className="btn-row">
-              <ActionButton onClick={() => setEditing(row)}>编辑</ActionButton>
-              <ActionButton variant="danger" onClick={() => handleDelete(row)}>删除</ActionButton>
-            </div>
-          )}
-        />
-      </section>
+      {view === "MATERIALS" ? (
+        <section className="panel-card">
+          <div className="section-heading">
+            <h2>剩余材料台账</h2>
+            <span>管理项目剩余材料、处置状态与回收价值。</span>
+          </div>
+          <DataTable
+            columns={[
+              { key: "material_name", title: "材料名称" },
+              { key: "specification", title: "规格说明" },
+              { key: "quantity", title: "数量" },
+              { key: "unit", title: "单位" },
+              { key: "estimated_value", title: "估值", render: (value) => formatCurrency(value) },
+              { key: "status", title: "状态" }
+            ]}
+            rows={comparison?.remainingMaterials || []}
+          />
+        </section>
+      ) : (
+        <section className="panel-card">
+          <div className="section-heading">
+            <h2>{meta.title}台账</h2>
+            <span>根据当前二级菜单展示对应的成本记录视图。</span>
+          </div>
+          <DataTable
+            columns={[
+              { key: "project_name", title: "项目名称" },
+              { key: "version_type", title: "版本类型", render: (value) => versionLabels[value] || value },
+              { key: "cost_category", title: "成本科目", render: (value) => categoryMap[value] || value },
+              { key: "amount", title: "金额", render: (value) => formatCurrency(value) },
+              { key: "entry_date", title: "录入日期" },
+              { key: "source_ref", title: "来源单号" }
+            ]}
+            rows={filteredCosts}
+            actions={(row) => (
+              <div className="btn-row">
+                <ActionButton onClick={() => setEditing(row)}>编辑</ActionButton>
+                <ActionButton variant="danger" onClick={() => handleDelete(row)}>删除</ActionButton>
+              </div>
+            )}
+          />
+        </section>
+      )}
     </div>
   );
 }

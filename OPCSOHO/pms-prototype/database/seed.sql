@@ -14,12 +14,14 @@ INSERT INTO project_documents (project_id, doc_type, file_name, uploaded_by, is_
   (2, 'SAFETY_DISCLOSURE', 'safety-disclosure-021.pdf', 'Staff 2', 1);
 
 INSERT INTO contracts
-  (id, project_id, contract_code, contract_type, contract_name, counterparty_name, amount, tax_rate, payment_terms, signed_date, status)
+  (id, project_id, contract_code, contract_type, contract_name, counterparty_name, amount, tax_rate, payment_terms, collection_stages, actual_collection_amount, signed_date, status)
 VALUES
-  (1, 1, 'SC-018-01', 'SALES', 'Contract 1', 'Counterparty 1', 24600000.00, 13.00, 'Terms 1', '2026-01-10', 'EXECUTING'),
-  (2, 1, 'PC-018-01', 'PROCUREMENT', 'Contract 2', 'Counterparty 2', 5600000.00, 13.00, 'Terms 2', '2026-01-18', 'EXECUTING'),
-  (3, 2, 'SC-021-01', 'SALES', 'Contract 3', 'Counterparty 3', 16800000.00, 9.00, 'Terms 3', '2026-01-28', 'EXECUTING'),
-  (4, 2, 'LC-021-01', 'LABOR', 'Contract 4', 'Counterparty 4', 3300000.00, 3.00, 'Terms 4', '2026-02-08', 'EXECUTING');
+  (1, 1, 'SC-018-01', 'SALES', 'Contract 1', 'Counterparty 1', 24600000.00, 13.00, 'Terms 1', '预付款\n发货款\n验收款\n质保金', 4920000.00, '2026-01-10', 'EXECUTING'),
+  (2, 1, 'PC-018-01', 'PROCUREMENT', 'Contract 2', 'Counterparty 2', 5600000.00, 13.00, 'Terms 2', NULL, 0.00, '2026-01-18', 'EXECUTING'),
+  (3, 2, 'SC-021-01', 'SALES', 'Contract 3', 'Counterparty 3', 16800000.00, 9.00, 'Terms 3', '预付款\n发货款\n调试款\n质保金', 2520000.00, '2026-01-28', 'EXECUTING'),
+  (4, 2, 'LC-021-01', 'LABOR', 'Contract 4', 'Counterparty 4', 3300000.00, 3.00, 'Terms 4', NULL, 0.00, '2026-02-08', 'EXECUTING'),
+  (5, 1, 'LC-018-02', 'LABOR', 'Contract 5', 'Counterparty 5', 1860000.00, 3.00, 'Terms 5', NULL, 0.00, '2026-02-15', 'EXECUTING'),
+  (6, 2, 'LC-021-02', 'LABOR', 'Contract 6', 'Counterparty 6', 2140000.00, 3.00, 'Terms 6', NULL, 0.00, '2026-03-03', 'APPROVED');
 
 INSERT INTO cost_entries
   (project_id, contract_id, version_type, cost_category, amount, entry_date, source_ref, notes)
@@ -47,16 +49,16 @@ VALUES
   (2, 'Material 2', 'Q235', 36.00, 'pcs', 12000.00, 'TO_BE_SCRAPPED', 'Note 2');
 
 INSERT INTO finance_transactions
-  (project_id, contract_id, transaction_type, direction, amount, due_date, transaction_date, status, vendor_name, applicant, notes)
+  (project_id, contract_id, transaction_type, direction, collection_stage, amount, due_date, transaction_date, status, vendor_name, applicant, notes)
 VALUES
-  (1, 1, 'COLLECTION_PLAN', 'INCOME', 4920000.00, '2026-01-20', NULL, 'APPROVED', 'Vendor 1', 'Applicant 1', 'Finance Note 1'),
-  (1, 1, 'COLLECTION', 'INCOME', 4920000.00, '2026-01-20', '2026-01-22', 'PAID', 'Vendor 1', 'Applicant 2', 'Finance Note 2'),
-  (1, 2, 'PREPAYMENT', 'EXPENSE', 1680000.00, '2026-01-25', '2026-01-26', 'PAID', 'Vendor 2', 'Applicant 3', 'Finance Note 3'),
-  (1, 2, 'PAYMENT_PLAN', 'EXPENSE', 2240000.00, '2026-03-30', NULL, 'PENDING', 'Vendor 2', 'Applicant 3', 'Finance Note 4'),
-  (1, NULL, 'WAGE_DISBURSEMENT', 'EXPENSE', 460000.00, '2026-03-25', '2026-03-25', 'PAID', 'Vendor 3', 'Applicant 4', 'Finance Note 5'),
-  (2, 3, 'COLLECTION_PLAN', 'INCOME', 2520000.00, '2026-02-10', NULL, 'APPROVED', 'Vendor 4', 'Applicant 1', 'Finance Note 1'),
-  (2, 3, 'COLLECTION', 'INCOME', 2520000.00, '2026-02-10', '2026-02-12', 'PAID', 'Vendor 4', 'Applicant 2', 'Finance Note 2'),
-  (2, 4, 'PAYMENT_REQUEST', 'EXPENSE', 680000.00, '2026-03-28', NULL, 'PENDING', 'Vendor 5', 'Applicant 5', 'Finance Note 6');
+  (1, 1, 'COLLECTION_PLAN', 'INCOME', '预付款', 4920000.00, '2026-01-20', NULL, 'APPROVED', 'Vendor 1', 'Applicant 1', 'Finance Note 1'),
+  (1, 1, 'COLLECTION', 'INCOME', '预付款', 4920000.00, '2026-01-20', '2026-01-22', 'PAID', 'Vendor 1', 'Applicant 2', 'Finance Note 2'),
+  (1, 2, 'PREPAYMENT', 'EXPENSE', NULL, 1680000.00, '2026-01-25', '2026-01-26', 'PAID', 'Vendor 2', 'Applicant 3', 'Finance Note 3'),
+  (1, 2, 'PAYMENT_PLAN', 'EXPENSE', NULL, 2240000.00, '2026-03-30', NULL, 'PENDING', 'Vendor 2', 'Applicant 3', 'Finance Note 4'),
+  (1, NULL, 'WAGE_DISBURSEMENT', 'EXPENSE', NULL, 460000.00, '2026-03-25', '2026-03-25', 'PAID', 'Vendor 3', 'Applicant 4', 'Finance Note 5'),
+  (2, 3, 'COLLECTION_PLAN', 'INCOME', '预付款', 2520000.00, '2026-02-10', NULL, 'APPROVED', 'Vendor 4', 'Applicant 1', 'Finance Note 1'),
+  (2, 3, 'COLLECTION', 'INCOME', '预付款', 2520000.00, '2026-02-10', '2026-02-12', 'PAID', 'Vendor 4', 'Applicant 2', 'Finance Note 2'),
+  (2, 4, 'PAYMENT_REQUEST', 'EXPENSE', NULL, 680000.00, '2026-03-28', NULL, 'PENDING', 'Vendor 5', 'Applicant 5', 'Finance Note 6');
 
 INSERT INTO site_records
   (project_id, record_type, title, vendor_or_team, status, planned_date, actual_date, amount, quantity, unit, details)
@@ -117,6 +119,18 @@ UPDATE contracts SET
   counterparty_name = CONVERT(0xe88b8fe5b79ce8bf9ce68b93e58ab3e58aa1e69c89e99990e585ace58fb8 USING utf8mb4),
   payment_terms = CONVERT(0xe68c89e69c88e8aea1e9878fe694afe4bb98 USING utf8mb4)
 WHERE id = 4;
+
+UPDATE contracts SET
+  contract_name = CONVERT(0xe586b7e5ba93e4bf9de6b8a9e983a8e58886e58ab3e58aa1e59088e5908c USING utf8mb4),
+  counterparty_name = CONVERT(0xe58d97e4baace5ae89e7ad91e58ab3e58aa1e69c89e99990e585ace58fb8 USING utf8mb4),
+  payment_terms = CONVERT(0xe68c89e69c88e5ae8ce68890e5b7a5e9878fe6a0b8e7ae97efbc8ce6acbee588b0e8b4a63135e697a5e58685e694afe4bb98 USING utf8mb4)
+WHERE id = 5;
+
+UPDATE contracts SET
+  contract_name = CONVERT(0xe4bf9de6b8a9e5ae89e8a385e78fade7bb84e58ab3e58aa1e59088e5908c USING utf8mb4),
+  counterparty_name = CONVERT(0xe88f8fe5b79ee5ae89e585a8e5b7a5e7a88be58ab3e58aa1e69c89e99990e585ace58fb8 USING utf8mb4),
+  payment_terms = CONVERT(0xe69c88e5baa6e88083e58ba4e5908ee6aca1e69c8835e697a5e5898de694afe4bb98 USING utf8mb4)
+WHERE id = 6;
 
 UPDATE cost_entries SET notes = CONVERT(0xe7adbee7baa6e4b8bbe69d90e68890e69cac USING utf8mb4) WHERE id IN (1, 10);
 UPDATE cost_entries SET notes = CONVERT(0xe7adbee7baa6e58ab3e58aa1e68890e69cac USING utf8mb4) WHERE id IN (2, 11);

@@ -1,4 +1,23 @@
-﻿const db = require("../config/db");
+const db = require("../config/db");
+
+async function generateProjectCode(connection, dateInput) {
+  const candidateDate = dateInput ? new Date(dateInput) : new Date();
+  const year = Number.isNaN(candidateDate.getTime()) ? new Date().getFullYear() : candidateDate.getFullYear();
+  const prefix = String(year);
+
+  const [rows] = await connection.query(
+    `SELECT project_code
+     FROM projects
+     WHERE project_code REGEXP ?
+     ORDER BY project_code DESC
+     LIMIT 1`,
+    [`^${prefix}[0-9]{5}$`]
+  );
+
+  const latestCode = rows[0]?.project_code || "";
+  const latestSerial = Number(latestCode.slice(prefix.length)) || 0;
+  return `${prefix}${String(latestSerial + 1).padStart(5, "0")}`;
+}
 
 async function getAllProjects(filters = {}) {
   let sql = `
@@ -34,7 +53,7 @@ async function getProjectById(id) {
     [id]
   );
   const [contracts] = await db.query(
-    "SELECT id, contract_code, contract_type, contract_name, amount, status FROM contracts WHERE project_id = ? ORDER BY id DESC",
+    "SELECT id, contract_code, contract_type, contract_name, amount, actual_collection_amount, actual_payment_amount, status FROM contracts WHERE project_id = ? ORDER BY id DESC",
     [id]
   );
 
@@ -63,7 +82,7 @@ async function getProjectDetailById(id) {
   );
 
   const [contracts] = await db.query(
-    `SELECT id, contract_code, contract_type, contract_name, counterparty_name, amount, tax_rate, payment_terms, signed_date, status
+    `SELECT id, contract_code, contract_type, contract_name, counterparty_name, amount, tax_rate, payment_terms, actual_collection_amount, actual_payment_amount, signed_date, status
      FROM contracts
      WHERE project_id = ?
      ORDER BY signed_date DESC, id DESC`,
@@ -190,30 +209,86 @@ async function getProjectDetailById(id) {
 }
 
 async function createProject(payload) {
-  const [result] = await db.query(
-    `INSERT INTO projects
-      (project_code, name, contract_no, project_type, business_type, customer_name, division_name, project_manager, status, start_date, planned_end_date, shipped_amount, collected_amount, contract_amount, description)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-    [
-      payload.project_code,
-      payload.name,
-      payload.contract_no || null,
-      payload.project_type,
-      payload.business_type || "EPC",
-      payload.customer_name,
-      payload.division_name,
-      payload.project_manager,
-      payload.status || "PLANNING",
-      payload.start_date || null,
-      payload.planned_end_date || null,
-      payload.shipped_amount || 0,
-      payload.collected_amount || 0,
-      payload.contract_amount || 0,
-      payload.description || null
-    ]
-  );
+  const connection = await db.getConnection();
 
-  return getProjectById(result.insertId);
+  try {
+    await connection.beginTransaction();
+    const projectCode = payload.project_code || await generateProjectCode(connection, payload.start_date);
+
+    const [result] = await connection.query(
+      `INSERT INTO projects
+        (project_code, name, contract_no, project_type, business_type, customer_name, division_name, project_manager, status, start_date, planned_end_date, shipped_amount, collected_amount, contract_amount, description)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        projectCode,
+        payload.name,
+        payload.contract_no || null,
+        payload.project_type,
+        payload.business_type || "EPC",
+        payload.customer_name,
+        payload.division_name,
+        payload.project_manager,
+        payload.status || "PLANNING",
+        payload.start_date || null,
+        payload.planned_end_date || null,
+        payload.shipped_amount || 0,
+        payload.collected_amount || 0,
+        payload.contract_amount || 0,
+        payload.description || null
+      ]
+    );
+
+    const projectId = result.insertId;
+    const templateTasks = Array.isArray(payload.template_tasks) ? payload.template_tasks : [];
+    const templateBudgets = Array.isArray(payload.template_budgets) ? payload.template_budgets : [];
+
+    if (templateTasks.length) {
+      await connection.query(
+        `INSERT INTO project_tasks
+          (project_id, phase, task_name, assignee_role, status, source_ref, description)
+         VALUES ?`,
+        [
+          templateTasks.map((item) => [
+            projectId,
+            item.phase,
+            item.task_name,
+            item.assignee_role || null,
+            item.status || "PENDING",
+            item.source_ref || "PROJECT_INIT_TEMPLATE",
+            item.description || "项目立项时按默认任务模板自动初始化"
+          ])
+        ]
+      );
+    }
+
+    if (templateBudgets.length) {
+      await connection.query(
+        `INSERT INTO cost_entries
+          (project_id, contract_id, version_type, cost_category, amount, entry_date, source_ref, notes)
+         VALUES ?`,
+        [
+          templateBudgets.map((item) => [
+            projectId,
+            item.contract_id || null,
+            item.version_type || "BUDGET",
+            item.cost_category,
+            item.amount || 0,
+            item.entry_date,
+            item.source_ref || "PROJECT_INIT_TEMPLATE",
+            item.notes || "项目立项时按默认预算模板自动初始化"
+          ])
+        ]
+      );
+    }
+
+    await connection.commit();
+    return getProjectById(projectId);
+  } catch (error) {
+    await connection.rollback();
+    throw error;
+  } finally {
+    connection.release();
+  }
 }
 
 async function updateProject(id, payload) {

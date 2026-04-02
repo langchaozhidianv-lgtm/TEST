@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { fetchProjects } from "../api/projectAPI";
 import { fetchContracts } from "../api/contractAPI";
 
@@ -25,18 +25,23 @@ export default function useProjectContractOptions() {
   }, []);
 
   const projectOptions = useMemo(
-    () => projects.map((item) => ({
-      value: String(item.id),
-      label: `${item.name}（${item.project_code}）`
-    })),
+    () =>
+      projects.map((item) => ({
+        value: String(item.id),
+        label: `${item.name} (${item.project_code})`
+      })),
     [projects]
   );
 
-  const getContractsByProject = (projectId) =>
-    contracts.filter((item) => String(item.project_id) === String(projectId));
+  const getContractsByProject = useCallback(
+    (projectId) => contracts.filter((item) => String(item.project_id) === String(projectId)),
+    [contracts]
+  );
 
-  const getProjectLabel = (projectId) =>
-    projectOptions.find((item) => item.value === String(projectId))?.label || "";
+  const getProjectLabel = useCallback(
+    (projectId) => projectOptions.find((item) => item.value === String(projectId))?.label || "",
+    [projectOptions]
+  );
 
   return {
     projects,

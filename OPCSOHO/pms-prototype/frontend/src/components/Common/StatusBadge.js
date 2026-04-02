@@ -42,7 +42,7 @@ const labelMap = {
   REDEPLOYED: "已调拨"
 };
 
-export default function StatusBadge({ value }) {
+export default function StatusBadge({ value, labelMapOverride }) {
   const tone = toneMap[value] || "neutral";
-  return <span className={`badge badge-${tone}`}>{labelMap[value] || value}</span>;
+  return <span className={`badge badge-${tone}`}>{labelMapOverride?.[value] || labelMap[value] || value}</span>;
 }
